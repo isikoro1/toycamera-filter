@@ -1,0 +1,261 @@
+:root {
+  color-scheme: dark;
+  --bg: #11110f;
+  --panel: #1c1b18;
+  --panel-2: #25231f;
+  --text: #f3efe5;
+  --muted: #b9b0a0;
+  --line: #3c372f;
+  --accent: #e2b35b;
+  --accent-2: #65a7a0;
+  --danger: #d86c57;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, rgba(226, 179, 91, 0.07), transparent 32rem),
+    var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.app {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem clamp(1rem, 3vw, 2rem);
+  border-bottom: 1px solid var(--line);
+  background: rgba(17, 17, 15, 0.92);
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(1.25rem, 2vw, 1.8rem);
+  letter-spacing: 0;
+}
+
+h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  letter-spacing: 0;
+}
+
+p {
+  margin: 0.25rem 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.file-button input {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  opacity: 0;
+}
+
+.file-button span,
+button {
+  min-height: 2.5rem;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 0.6rem 0.85rem;
+  cursor: pointer;
+}
+
+.file-button span {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  background: var(--accent);
+  border-color: #f0c875;
+  color: #1b1407;
+  font-weight: 700;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(18rem, 23rem) minmax(0, 1fr);
+  min-height: 0;
+}
+
+.panel {
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+}
+
+.controls {
+  padding: 1rem;
+  overflow: auto;
+}
+
+.preset-grid {
+  display: grid;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.preset-card {
+  display: grid;
+  gap: 0.2rem;
+  min-height: 4rem;
+  width: 100%;
+  text-align: left;
+  background: #151410;
+}
+
+.preset-card strong {
+  color: var(--text);
+  font-size: 0.98rem;
+}
+
+.preset-card span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.preset-card.is-active {
+  border-color: var(--accent);
+  background: #2c2414;
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.status {
+  min-height: 1.25rem;
+  margin-top: 0.75rem;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.status.is-error {
+  color: var(--danger);
+}
+
+.status a {
+  color: var(--accent);
+}
+
+.preview-area {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: clamp(0.75rem, 2vw, 1.5rem);
+  overflow: hidden;
+}
+
+canvas {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: calc(100vh - 8rem);
+  background: #050504;
+  border: 1px solid #2f2b25;
+  box-shadow: 0 1.2rem 4rem rgba(0, 0, 0, 0.35);
+}
+
+.empty-state {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  gap: 0.35rem;
+  text-align: center;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.empty-state[hidden] {
+  display: none;
+}
+
+.empty-state strong {
+  color: var(--text);
+}
+
+.transport {
+  display: grid;
+  grid-template-columns: auto minmax(6rem, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem clamp(0.75rem, 2vw, 1.5rem);
+  border-top: 1px solid var(--line);
+  background: rgba(17, 17, 15, 0.8);
+}
+
+#timeLabel {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+#sourceVideo {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .topbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .panel {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .controls {
+    max-height: 44vh;
+  }
+
+  .actions {
+    grid-template-columns: 1fr;
+  }
+
+  .transport {
+    grid-template-columns: auto 1fr;
+  }
+
+  #timeLabel {
+    grid-column: 1 / -1;
+  }
+}
