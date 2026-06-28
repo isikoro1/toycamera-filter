@@ -7,35 +7,33 @@ const presetGrid = document.querySelector("#presetGrid");
 const playPause = document.querySelector("#playPause");
 const seek = document.querySelector("#seek");
 const timeLabel = document.querySelector("#timeLabel");
-const downloadImage = document.querySelector("#downloadImage");
-const recordVideo = document.querySelector("#recordVideo");
+const saveOutput = document.querySelector("#saveOutput");
 const statusText = document.querySelector("#statusText");
 
 const presets = {
-  heiseiCompact: {
-    fade: 24, warmth: 18, contrast: 10, grain: 28, softness: 18,
-    vignette: 34, lightLeak: 20, dateStamp: 55, dateText: "1998 06 23",
-    dust: true, scanlines: false, chromatic: true,
-  },
-  showaFilm: {
-    fade: 42, warmth: 32, contrast: 22, grain: 48, softness: 24,
-    vignette: 46, lightLeak: 28, dateStamp: 0, dateText: "",
-    dust: true, scanlines: false, chromatic: false,
+  instantCamera: {
+    fade: 54, warmth: 10, contrast: -16, grain: 18, softness: 38,
+    vignette: 24, lightLeak: 14, dateStamp: 0,
+    dust: false, chromatic: false, mood: "instantCamera",
+    resolutionScale: 0.48, saturation: 0.48, colorLevels: 38,
   },
   toyCamera: {
-    fade: 18, warmth: 26, contrast: 38, grain: 36, softness: 30,
-    vignette: 74, lightLeak: 42, dateStamp: 18, dateText: "2002 08 17",
-    dust: true, scanlines: false, chromatic: true,
+    fade: 24, warmth: 22, contrast: 24, grain: 34, softness: 38,
+    vignette: 74, lightLeak: 42, dateStamp: 18,
+    dust: true, chromatic: true, mood: "toyCamera",
+    resolutionScale: 0.42, saturation: 0.66, colorLevels: 44,
   },
-  instant: {
-    fade: 50, warmth: 12, contrast: -4, grain: 22, softness: 20,
-    vignette: 24, lightLeak: 18, dateStamp: 0, dateText: "",
-    dust: false, scanlines: false, chromatic: false,
+  cheki: {
+    fade: 62, warmth: 12, contrast: -22, grain: 14, softness: 56,
+    vignette: 42, lightLeak: 8, dateStamp: 0,
+    dust: false, chromatic: false, mood: "cheki",
+    resolutionScale: 0.52, saturation: 0.42, colorLevels: 36,
   },
-  vhs: {
-    fade: 26, warmth: -10, contrast: 16, grain: 44, softness: 34,
-    vignette: 18, lightLeak: 0, dateStamp: 46, dateText: "1994 11 03",
-    dust: false, scanlines: true, chromatic: true,
+  featurePhone: {
+    fade: 44, warmth: -8, contrast: -12, grain: 12, softness: 62,
+    vignette: 8, lightLeak: 0, dateStamp: 88,
+    dust: false, chromatic: false, mood: "featurePhone",
+    resolutionScale: 0.18, saturation: 0.44, colorLevels: 18,
   },
 };
 
@@ -43,11 +41,11 @@ let sourceImage = null;
 let sourceKind = null;
 let animationId = 0;
 let recording = false;
-let selectedPreset = "heiseiCompact";
+let selectedPreset = "none";
 let lastDownloadUrl = "";
 
 function readSettings() {
-  const preset = presets[selectedPreset] || presets.heiseiCompact;
+  const preset = presets[selectedPreset] || presets.instantCamera;
   return {
     ...preset,
     fade: preset.fade / 100,
@@ -59,6 +57,9 @@ function readSettings() {
     lightLeak: preset.lightLeak / 100,
     dateStamp: preset.dateStamp / 100,
     dateText: preset.dateStamp > 0 ? formatCurrentStamp() : "",
+    saturation: preset.saturation ?? 1,
+    colorLevels: preset.colorLevels ?? 256,
+    resolutionScale: preset.resolutionScale ?? 1,
   };
 }
 
@@ -78,6 +79,38 @@ function drawSource() {
   } else {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
   }
+}
+
+function renderFrame() {
+  drawSource();
+  if (selectedPreset === "none") {
+    updateTransport();
+    return;
+  }
+
+  const settings = readSettings();
+  applyResolutionDegrade(settings);
+  applyPixelPass(settings);
+  applyChromatic(settings);
+  applyOverlays(settings);
+  updateTransport();
+}
+
+function applyResolutionDegrade(settings) {
+  const scale = settings.resolutionScale ?? 1;
+  if (scale >= 0.98) return;
+  const offscreen = document.createElement("canvas");
+  offscreen.width = Math.max(2, Math.round(canvas.width * scale));
+  offscreen.height = Math.max(2, Math.round(canvas.height * scale));
+  const offscreenCtx = offscreen.getContext("2d");
+  offscreenCtx.imageSmoothingEnabled = true;
+  offscreenCtx.imageSmoothingQuality = "low";
+  offscreenCtx.drawImage(canvas, 0, 0, offscreen.width, offscreen.height);
+  ctx.save();
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "low";
+  ctx.drawImage(offscreen, 0, 0, canvas.width, canvas.height);
+  ctx.restore();
 }
 
 function applyPixelPass(settings) {
@@ -106,6 +139,38 @@ function applyPixelPass(settings) {
     r += warmth * 26 + grain;
     g += warmth * 8 + grain;
     b -= warmth * 20 - grain;
+
+    if (settings.mood === "featurePhone") {
+      const washed = luma * 0.72;
+      r = washed + r * 0.24 + 10;
+      g = washed + g * 0.30 + 18;
+      b = washed + b * 0.25 + 22;
+      if (luma > 170) {
+        const blowout = (luma - 170) * 1.1;
+        r += blowout;
+        g += blowout;
+        b += blowout;
+      }
+    }
+
+    if (settings.mood === "cheki") {
+      r += 8;
+      g += 4;
+      b += 2;
+    }
+
+    if (settings.saturation < 1) {
+      r = luma + (r - luma) * settings.saturation;
+      g = luma + (g - luma) * settings.saturation;
+      b = luma + (b - luma) * settings.saturation;
+    }
+
+    if (settings.colorLevels < 256) {
+      const step = 255 / Math.max(2, settings.colorLevels - 1);
+      r = Math.round(r / step) * step;
+      g = Math.round(g / step) * step;
+      b = Math.round(b / step) * step;
+    }
 
     data[i] = clamp(r);
     data[i + 1] = clamp(g);
@@ -149,6 +214,9 @@ function applyOverlays(settings) {
     ctx.fillRect(0, 0, w, h);
   }
 
+  if (settings.mood === "featurePhone") drawFeaturePhoneOverlay(w, h, time);
+  if (settings.mood === "cheki") drawChekiOverlay(w, h);
+
   if (settings.vignette > 0) {
     const radius = Math.max(w, h) * 0.72;
     const vignette = ctx.createRadialGradient(w / 2, h / 2, radius * 0.18, w / 2, h / 2, radius);
@@ -158,23 +226,63 @@ function applyOverlays(settings) {
     ctx.fillRect(0, 0, w, h);
   }
 
-  if (settings.scanlines) {
-    ctx.fillStyle = "rgba(20, 20, 20, 0.18)";
-    for (let y = Math.floor(time * 18) % 4; y < h; y += 4) {
-      ctx.fillRect(0, y, w, 1);
-    }
-    ctx.fillStyle = "rgba(255, 255, 255, 0.07)";
-    const tearY = (Math.sin(time * 2.1) * 0.5 + 0.5) * h;
-    ctx.fillRect(0, tearY, w, 2);
-  }
+  if (settings.dust) drawDust(w, h, time);
+  if (settings.dateStamp > 0 && settings.dateText) drawDateStamp(settings);
+}
 
-  if (settings.dust) {
-    drawDust(w, h, time);
-  }
+function drawFeaturePhoneOverlay(w, h, time) {
+  ctx.save();
+  ctx.globalAlpha = 0.52;
+  ctx.filter = "blur(5px) saturate(0.88)";
+  ctx.drawImage(canvas, 0, 0);
+  ctx.filter = "none";
 
-  if (settings.dateStamp > 0 && settings.dateText) {
-    drawDateStamp(settings);
+  ctx.globalCompositeOperation = "screen";
+  const haze = ctx.createLinearGradient(0, 0, w, h);
+  haze.addColorStop(0, "rgba(198, 255, 234, 0.10)");
+  haze.addColorStop(0.55, "rgba(230, 236, 232, 0.05)");
+  haze.addColorStop(1, "rgba(255, 218, 186, 0.06)");
+  ctx.fillStyle = haze;
+  ctx.fillRect(0, 0, w, h);
+
+  const purple = ctx.createRadialGradient(w * 0.02, h * 0.02, 0, w * 0.02, h * 0.02, Math.max(w, h) * 0.28);
+  purple.addColorStop(0, "rgba(176, 70, 255, 0.18)");
+  purple.addColorStop(1, "rgba(176, 70, 255, 0)");
+  ctx.fillStyle = purple;
+  ctx.fillRect(0, 0, w, h);
+
+  ctx.globalCompositeOperation = "source-over";
+  ctx.globalAlpha = 0.08;
+  ctx.fillStyle = "#ffffff";
+  const speckCount = Math.round((w * h) / 32000);
+  for (let i = 0; i < speckCount; i++) {
+    const x = seededNoise(i * 13 + Math.floor(time)) * w;
+    const y = seededNoise(i * 17 + 9) * h;
+    ctx.fillRect(x, y, 1, 1);
   }
+  ctx.restore();
+}
+
+function drawChekiOverlay(w, h) {
+  ctx.save();
+  ctx.globalCompositeOperation = "screen";
+  ctx.fillStyle = "rgba(255, 246, 224, 0.13)";
+  ctx.fillRect(0, 0, w, h);
+  ctx.globalCompositeOperation = "multiply";
+  const edge = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.25, w / 2, h / 2, Math.max(w, h) * 0.72);
+  edge.addColorStop(0, "rgba(0, 0, 0, 0)");
+  edge.addColorStop(1, "rgba(0, 0, 0, 0.34)");
+  ctx.fillStyle = edge;
+  ctx.fillRect(0, 0, w, h);
+  ctx.globalCompositeOperation = "source-over";
+  const frame = Math.max(18, Math.round(Math.min(w, h) * 0.045));
+  const bottom = Math.round(frame * 2.35);
+  ctx.fillStyle = "rgba(250, 246, 236, 0.96)";
+  ctx.fillRect(0, 0, w, frame);
+  ctx.fillRect(0, 0, frame, h);
+  ctx.fillRect(w - frame, 0, frame, h);
+  ctx.fillRect(0, h - bottom, w, bottom);
+  ctx.restore();
 }
 
 function drawDust(w, h, time) {
@@ -217,15 +325,6 @@ function drawDateStamp(settings) {
   ctx.restore();
 }
 
-function renderFrame() {
-  const settings = readSettings();
-  drawSource();
-  applyPixelPass(settings);
-  applyChromatic(settings);
-  applyOverlays(settings);
-  updateTransport();
-}
-
 function loop() {
   renderFrame();
   animationId = requestAnimationFrame(loop);
@@ -236,7 +335,7 @@ function stopLoop() {
 }
 
 function setPreset(name) {
-  if (!presets[name]) return;
+  if (name !== "none" && !presets[name]) return;
   selectedPreset = name;
   document.querySelectorAll(".preset-card").forEach((button) => {
     button.classList.toggle("is-active", button.dataset.preset === name);
@@ -258,8 +357,7 @@ function handleFile(file) {
       sourceImage = img;
       fitCanvas(img.naturalWidth, img.naturalHeight);
       emptyState.hidden = true;
-      downloadImage.disabled = false;
-      recordVideo.disabled = true;
+      saveOutput.disabled = false;
       playPause.disabled = true;
       seek.disabled = true;
       setStatus("画像を読み込みました");
@@ -274,8 +372,7 @@ function handleFile(file) {
       sourceKind = "video";
       fitCanvas(video.videoWidth, video.videoHeight);
       emptyState.hidden = true;
-      downloadImage.disabled = true;
-      recordVideo.disabled = false;
+      saveOutput.disabled = false;
       playPause.disabled = false;
       seek.disabled = false;
       setStatus("動画を読み込みました");
@@ -299,25 +396,32 @@ function updateTransport() {
   playPause.textContent = video.paused ? "再生" : "一時停止";
 }
 
+async function saveCurrentOutput() {
+  if (sourceKind === "image") {
+    await downloadCanvas();
+  } else if (sourceKind === "video") {
+    await recordProcessedVideo();
+  }
+}
+
 async function downloadCanvas() {
-  if (sourceKind !== "image") return;
   renderFrame();
   try {
     const blob = await canvasToBlob("image/png");
     const fileName = `analog-camera-${Date.now()}.png`;
     const url = saveBlob(blob, fileName);
-    setDownloadStatus("画像を書き出しました", url, fileName);
+    setDownloadStatus("保存しました", url, fileName);
   } catch (error) {
     console.error(error);
-    setStatus("画像を書き出せませんでした", true);
+    setStatus("保存できませんでした", true);
   }
 }
 
 async function recordProcessedVideo() {
-  if (recording || sourceKind !== "video") return;
+  if (recording) return;
   recording = true;
-  recordVideo.textContent = "保存中";
-  recordVideo.disabled = true;
+  saveOutput.textContent = "保存中";
+  saveOutput.disabled = true;
   setStatus("動画を書き出しています");
 
   try {
@@ -329,19 +433,19 @@ async function recordProcessedVideo() {
     recorder.ondataavailable = (event) => {
       if (event.data.size > 0) chunks.push(event.data);
     };
-    recorder.onstop = async () => {
+    recorder.onstop = () => {
       try {
         const blob = new Blob(chunks, { type: recorder.mimeType || "video/webm" });
         const fileName = `analog-camera-${Date.now()}.webm`;
         const url = saveBlob(blob, fileName);
-        setDownloadStatus("動画を書き出しました", url, fileName);
+        setDownloadStatus("保存しました", url, fileName);
       } catch (error) {
         console.error(error);
-        setStatus("動画を書き出せませんでした", true);
+        setStatus("保存できませんでした", true);
       }
       recording = false;
-      recordVideo.textContent = "動画保存";
-      recordVideo.disabled = false;
+      saveOutput.textContent = "保存";
+      saveOutput.disabled = false;
     };
 
     video.currentTime = 0;
@@ -355,10 +459,10 @@ async function recordProcessedVideo() {
     }, 250);
   } catch (error) {
     console.error(error);
-    setStatus("動画を書き出せませんでした", true);
+    setStatus("保存できませんでした", true);
     recording = false;
-    recordVideo.textContent = "動画保存";
-    recordVideo.disabled = false;
+    saveOutput.textContent = "保存";
+    saveOutput.disabled = false;
   }
 }
 
@@ -454,7 +558,6 @@ seek.addEventListener("input", () => {
   }
 });
 
-downloadImage.addEventListener("click", downloadCanvas);
-recordVideo.addEventListener("click", recordProcessedVideo);
+saveOutput.addEventListener("click", saveCurrentOutput);
 video.addEventListener("ended", updateTransport);
-setPreset("heiseiCompact");
+setPreset("none");

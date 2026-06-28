@@ -11,43 +11,36 @@
       <header class="topbar">
         <div>
           <h1>Analog Camera Lab</h1>
-          <p>画像や映像をアナログカメラ風に変換</p>
+          <p>画像や映像をレトロカメラ風に変換</p>
         </div>
-        <label class="file-button">
-          <input id="fileInput" type="file" accept="image/*,video/*">
-          <span>読み込む</span>
-        </label>
+        <div class="top-actions">
+          <label class="file-button">
+            <input id="fileInput" type="file" accept="image/*,video/*">
+            <span>読み込む</span>
+          </label>
+          <button id="saveOutput" class="top-save" type="button" disabled>保存</button>
+        </div>
       </header>
 
       <section class="workspace" aria-label="編集ワークスペース">
         <aside class="panel controls" aria-label="パターン">
           <h2>パターン</h2>
           <div class="preset-grid" id="presetGrid" role="group" aria-label="変換パターン">
-            <button class="preset-card is-active" type="button" data-preset="heiseiCompact">
-              <strong>平成コンパクト</strong>
-              <span>少し眠い色、日付入り</span>
+            <button class="preset-card is-active" type="button" data-preset="none">
+              <strong>エフェクトなし</strong>
             </button>
-            <button class="preset-card" type="button" data-preset="showaFilm">
-              <strong>昭和フィルム</strong>
-              <span>褪色、粒子、古い写真</span>
+            <button class="preset-card" type="button" data-preset="instantCamera">
+              <strong>インスタントカメラ</strong>
             </button>
             <button class="preset-card" type="button" data-preset="toyCamera">
               <strong>トイカメラ</strong>
-              <span>強い周辺減光と光漏れ</span>
             </button>
-            <button class="preset-card" type="button" data-preset="instant">
-              <strong>ポラロイド</strong>
-              <span>淡く柔らかい白っぽさ</span>
+            <button class="preset-card" type="button" data-preset="cheki">
+              <strong>チェキ</strong>
             </button>
-            <button class="preset-card" type="button" data-preset="vhs">
-              <strong>VHS</strong>
-              <span>走査線と色ズレ</span>
+            <button class="preset-card" type="button" data-preset="featurePhone">
+              <strong>ガラケーカメラ</strong>
             </button>
-          </div>
-
-          <div class="actions">
-            <button id="downloadImage" type="button" disabled>画像保存</button>
-            <button id="recordVideo" type="button" disabled>動画保存</button>
           </div>
           <p class="status" id="statusText" aria-live="polite"></p>
         </aside>

@@ -46,6 +46,12 @@ input {
   background: rgba(17, 17, 15, 0.92);
 }
 
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
 h1 {
   margin: 0;
   font-size: clamp(1.25rem, 2vw, 1.8rem);
@@ -72,7 +78,8 @@ p {
 }
 
 .file-button span,
-button {
+button,
+.top-save {
   min-height: 2.5rem;
   border: 1px solid var(--line);
   background: var(--panel-2);
@@ -85,10 +92,17 @@ button {
 .file-button span {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  min-width: 6.2rem;
   white-space: nowrap;
   background: var(--accent);
   border-color: #f0c875;
   color: #1b1407;
+  font-weight: 700;
+}
+
+.top-save {
+  min-width: 6.2rem;
   font-weight: 700;
 }
 
@@ -115,27 +129,26 @@ button:disabled {
 
 .preset-grid {
   display: grid;
-  gap: 0.6rem;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem;
   margin-bottom: 1rem;
 }
 
 .preset-card {
-  display: grid;
-  gap: 0.2rem;
-  min-height: 4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.45rem;
   width: 100%;
-  text-align: left;
+  text-align: center;
   background: #151410;
+  padding: 0.45rem 0.55rem;
 }
 
 .preset-card strong {
   color: var(--text);
-  font-size: 0.98rem;
-}
-
-.preset-card span {
-  color: var(--muted);
-  font-size: 0.82rem;
+  font-size: 0.88rem;
+  line-height: 1.15;
 }
 
 .preset-card.is-active {
@@ -144,15 +157,9 @@ button:disabled {
   box-shadow: inset 3px 0 0 var(--accent);
 }
 
-.actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.6rem;
-}
-
 .status {
   min-height: 1.25rem;
-  margin-top: 0.75rem;
+  margin-top: 0.5rem;
   color: var(--muted);
   font-size: 0.84rem;
 }
@@ -234,6 +241,16 @@ canvas {
     flex-direction: column;
   }
 
+  .top-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .file-button span,
+  .top-save {
+    width: 100%;
+  }
+
   .workspace {
     grid-template-columns: 1fr;
   }
@@ -245,10 +262,6 @@ canvas {
 
   .controls {
     max-height: 44vh;
-  }
-
-  .actions {
-    grid-template-columns: 1fr;
   }
 
   .transport {
