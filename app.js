@@ -23,15 +23,9 @@ const presets = {
     dust: true, chromatic: true, mood: "toyCamera",
     resolutionScale: 0.42, saturation: 0.66, colorLevels: 44,
   },
-  cheki: {
-    fade: 62, warmth: 12, contrast: -22, grain: 14, softness: 56,
-    vignette: 42, lightLeak: 8, dateStamp: 0,
-    dust: false, chromatic: false, mood: "cheki",
-    resolutionScale: 0.52, saturation: 0.42, colorLevels: 36,
-  },
   featurePhone: {
     fade: 44, warmth: -8, contrast: -12, grain: 12, softness: 62,
-    vignette: 8, lightLeak: 0, dateStamp: 88,
+    vignette: 8, lightLeak: 0, dateStamp: 0,
     dust: false, chromatic: false, mood: "featurePhone",
     resolutionScale: 0.18, saturation: 0.44, colorLevels: 18,
   },
@@ -153,12 +147,6 @@ function applyPixelPass(settings) {
       }
     }
 
-    if (settings.mood === "cheki") {
-      r += 8;
-      g += 4;
-      b += 2;
-    }
-
     if (settings.saturation < 1) {
       r = luma + (r - luma) * settings.saturation;
       g = luma + (g - luma) * settings.saturation;
@@ -215,8 +203,6 @@ function applyOverlays(settings) {
   }
 
   if (settings.mood === "featurePhone") drawFeaturePhoneOverlay(w, h, time);
-  if (settings.mood === "cheki") drawChekiOverlay(w, h);
-
   if (settings.vignette > 0) {
     const radius = Math.max(w, h) * 0.72;
     const vignette = ctx.createRadialGradient(w / 2, h / 2, radius * 0.18, w / 2, h / 2, radius);
@@ -260,28 +246,6 @@ function drawFeaturePhoneOverlay(w, h, time) {
     const y = seededNoise(i * 17 + 9) * h;
     ctx.fillRect(x, y, 1, 1);
   }
-  ctx.restore();
-}
-
-function drawChekiOverlay(w, h) {
-  ctx.save();
-  ctx.globalCompositeOperation = "screen";
-  ctx.fillStyle = "rgba(255, 246, 224, 0.13)";
-  ctx.fillRect(0, 0, w, h);
-  ctx.globalCompositeOperation = "multiply";
-  const edge = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.25, w / 2, h / 2, Math.max(w, h) * 0.72);
-  edge.addColorStop(0, "rgba(0, 0, 0, 0)");
-  edge.addColorStop(1, "rgba(0, 0, 0, 0.34)");
-  ctx.fillStyle = edge;
-  ctx.fillRect(0, 0, w, h);
-  ctx.globalCompositeOperation = "source-over";
-  const frame = Math.max(18, Math.round(Math.min(w, h) * 0.045));
-  const bottom = Math.round(frame * 2.35);
-  ctx.fillStyle = "rgba(250, 246, 236, 0.96)";
-  ctx.fillRect(0, 0, w, frame);
-  ctx.fillRect(0, 0, frame, h);
-  ctx.fillRect(w - frame, 0, frame, h);
-  ctx.fillRect(0, h - bottom, w, bottom);
   ctx.restore();
 }
 
