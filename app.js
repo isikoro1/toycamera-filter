@@ -24,10 +24,10 @@ const presets = {
     resolutionScale: 0.42, saturation: 0.66, colorLevels: 44,
   },
   featurePhone: {
-    fade: 52, warmth: -14, contrast: -18, grain: 30, softness: 78,
+    fade: 46, warmth: -8, contrast: -14, grain: 30, softness: 78,
     vignette: 8, lightLeak: 0, dateStamp: 0,
     dust: false, chromatic: false, mood: "featurePhone",
-    resolutionScale: 0.105, saturation: 0.34, colorLevels: 12,
+    resolutionScale: 0.105, saturation: 0.82, colorLevels: 18,
   },
 };
 
@@ -136,9 +136,9 @@ function applyPixelPass(settings) {
 
     if (settings.mood === "featurePhone") {
       const crushed = luma < 76 ? luma * 0.74 : luma;
-      r = crushed * 0.74 + r * 0.16 + 8;
-      g = crushed * 0.76 + g * 0.18 + 14;
-      b = crushed * 0.76 + b * 0.15 + 18;
+      r = crushed * 0.38 + r * 0.52 + 8;
+      g = crushed * 0.40 + g * 0.50 + 12;
+      b = crushed * 0.40 + b * 0.48 + 14;
       if (luma > 152) {
         const blowout = (luma - 152) * 1.22;
         r += blowout;
