@@ -3,6 +3,7 @@ const ctx = canvas.getContext("2d", { willReadFrequently: true });
 const fileInput = document.querySelector("#fileInput");
 const video = document.querySelector("#sourceVideo");
 const emptyState = document.querySelector("#emptyState");
+const stage = document.querySelector(".stage");
 const presetGrid = document.querySelector("#presetGrid");
 const playPause = document.querySelector("#playPause");
 const seek = document.querySelector("#seek");
@@ -37,6 +38,7 @@ let animationId = 0;
 let recording = false;
 let selectedPreset = "none";
 let lastDownloadUrl = "";
+let sourceDateText = "";
 
 function readSettings() {
   const preset = presets[selectedPreset] || presets.instantCamera;
@@ -50,7 +52,7 @@ function readSettings() {
     vignette: preset.vignette / 100,
     lightLeak: preset.lightLeak / 100,
     dateStamp: preset.dateStamp / 100,
-    dateText: preset.dateStamp > 0 ? formatCurrentStamp() : "",
+    dateText: preset.dateStamp > 0 ? sourceDateText : "",
     saturation: preset.saturation ?? 1,
     colorLevels: preset.colorLevels ?? 256,
     resolutionScale: preset.resolutionScale ?? 1,
@@ -328,9 +330,15 @@ function setPreset(name) {
 }
 
 function handleFile(file) {
+  if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
+    setStatus("JPG, PNG, WebP, MP4, MOV, WebMを読み込めます", true);
+    return;
+  }
+
   URL.revokeObjectURL(video.src);
   stopLoop();
   sourceImage = null;
+  sourceDateText = formatDateStamp(new Date(file.lastModified || Date.now()));
   video.pause();
 
   const url = URL.createObjectURL(file);
@@ -488,13 +496,12 @@ function setDownloadStatus(message, url, fileName) {
   statusText.append(link);
 }
 
-function formatCurrentStamp() {
-  const now = new Date();
-  const year = String(now.getFullYear());
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  const hours = String(now.getHours()).padStart(2, "0");
-  const minutes = String(now.getMinutes()).padStart(2, "0");
+function formatDateStamp(date) {
+  const year = String(date.getFullYear());
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
   return `${year} ${month} ${day} ${hours}:${minutes}`;
 }
 
@@ -521,6 +528,26 @@ function clamp(value) {
 
 fileInput.addEventListener("change", (event) => {
   const file = event.target.files?.[0];
+  if (file) handleFile(file);
+});
+
+["dragenter", "dragover"].forEach((eventName) => {
+  stage.addEventListener(eventName, (event) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
+    stage.classList.add("is-drag-over");
+  });
+});
+
+["dragleave", "drop"].forEach((eventName) => {
+  stage.addEventListener(eventName, () => {
+    stage.classList.remove("is-drag-over");
+  });
+});
+
+stage.addEventListener("drop", (event) => {
+  event.preventDefault();
+  const file = event.dataTransfer.files?.[0];
   if (file) handleFile(file);
 });
 

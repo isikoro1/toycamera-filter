@@ -197,6 +197,17 @@ canvas {
   box-shadow: 0 1.2rem 4rem rgba(0, 0, 0, 0.35);
 }
 
+.stage.is-drag-over canvas {
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 3px rgba(226, 179, 91, 0.22),
+    0 1.2rem 4rem rgba(0, 0, 0, 0.35);
+}
+
+.stage.is-drag-over .empty-state {
+  color: var(--accent);
+}
+
 .empty-state {
   position: absolute;
   display: grid;
