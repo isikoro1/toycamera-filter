@@ -24,10 +24,10 @@ const presets = {
     resolutionScale: 0.42, saturation: 0.66, colorLevels: 44,
   },
   featurePhone: {
-    fade: 44, warmth: -8, contrast: -12, grain: 12, softness: 62,
+    fade: 52, warmth: -14, contrast: -18, grain: 30, softness: 78,
     vignette: 8, lightLeak: 0, dateStamp: 0,
     dust: false, chromatic: false, mood: "featurePhone",
-    resolutionScale: 0.18, saturation: 0.44, colorLevels: 18,
+    resolutionScale: 0.105, saturation: 0.34, colorLevels: 12,
   },
 };
 
@@ -135,12 +135,12 @@ function applyPixelPass(settings) {
     b -= warmth * 20 - grain;
 
     if (settings.mood === "featurePhone") {
-      const washed = luma * 0.72;
-      r = washed + r * 0.24 + 10;
-      g = washed + g * 0.30 + 18;
-      b = washed + b * 0.25 + 22;
-      if (luma > 170) {
-        const blowout = (luma - 170) * 1.1;
+      const crushed = luma < 76 ? luma * 0.74 : luma;
+      r = crushed * 0.74 + r * 0.16 + 8;
+      g = crushed * 0.76 + g * 0.18 + 14;
+      b = crushed * 0.76 + b * 0.15 + 18;
+      if (luma > 152) {
+        const blowout = (luma - 152) * 1.22;
         r += blowout;
         g += blowout;
         b += blowout;
@@ -218,8 +218,8 @@ function applyOverlays(settings) {
 
 function drawFeaturePhoneOverlay(w, h, time) {
   ctx.save();
-  ctx.globalAlpha = 0.52;
-  ctx.filter = "blur(5px) saturate(0.88)";
+  ctx.globalAlpha = 0.64;
+  ctx.filter = "blur(7px) saturate(0.78)";
   ctx.drawImage(canvas, 0, 0);
   ctx.filter = "none";
 
@@ -238,14 +238,34 @@ function drawFeaturePhoneOverlay(w, h, time) {
   ctx.fillRect(0, 0, w, h);
 
   ctx.globalCompositeOperation = "source-over";
-  ctx.globalAlpha = 0.08;
+  ctx.globalAlpha = 0.15;
   ctx.fillStyle = "#ffffff";
-  const speckCount = Math.round((w * h) / 32000);
+  const speckCount = Math.round((w * h) / 18000);
   for (let i = 0; i < speckCount; i++) {
     const x = seededNoise(i * 13 + Math.floor(time)) * w;
     const y = seededNoise(i * 17 + 9) * h;
     ctx.fillRect(x, y, 1, 1);
   }
+
+  ctx.globalAlpha = 0.11;
+  const block = Math.max(10, Math.round(Math.min(w, h) * 0.024));
+  for (let y = 0; y < h; y += block) {
+    for (let x = 0; x < w; x += block) {
+      const n = seededNoise(x * 0.17 + y * 0.31 + Math.floor(time * 2));
+      if (n > 0.55) {
+        const shade = n > 0.78 ? 255 : 28;
+        ctx.fillStyle = `rgba(${shade}, ${shade}, ${shade}, ${0.06 + n * 0.08})`;
+        ctx.fillRect(x, y, block, block);
+      }
+    }
+  }
+
+  ctx.globalCompositeOperation = "multiply";
+  const dirty = ctx.createRadialGradient(w * 0.5, h * 0.44, Math.min(w, h) * 0.15, w * 0.5, h * 0.44, Math.max(w, h) * 0.74);
+  dirty.addColorStop(0, "rgba(0, 0, 0, 0)");
+  dirty.addColorStop(1, "rgba(18, 12, 20, 0.28)");
+  ctx.fillStyle = dirty;
+  ctx.fillRect(0, 0, w, h);
   ctx.restore();
 }
 
